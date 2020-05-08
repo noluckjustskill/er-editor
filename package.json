@@ -5,11 +5,13 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@mdi/font": "^5.1.45",
     "core-js": "^3.6.4",
+    "gh-pages": "^2.2.0",
     "lodash.isequal": "^4.5.0",
     "moment": "^2.25.3",
     "pixi.js-legacy": "^5.2.4",
