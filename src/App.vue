@@ -58,6 +58,11 @@
         @save="editRelation"
         @close="editRelationDialog = false"
       />
+      <ExportDialog
+        :opened="exportDialog"
+        :sql="exportString"
+        @close="exportDialog = false"
+      />
     </v-content>
   </v-app>
 </template>
@@ -70,12 +75,14 @@
   import AddFieldDialog from './components/AddFieldDialog';
   import AddEntityDialog from './components/AddEntityDialog';
   import EditRelationDialog from './components/EditRelationDialog';
+  import ExportDialog from './components/ExportDialog';
 
   export default {
     components: {
       AddFieldDialog,
       AddEntityDialog,
       EditRelationDialog,
+      ExportDialog,
     },
     data: () => ({
       app: null,
@@ -86,9 +93,11 @@
       entityForMove: null,
       selectedConnector: null,
       connectingLine: null,
+      exportString: null,
       addEntityDialog: false,
       addFieldDialog: false,
       editRelationDialog: false,
+      exportDialog: false,
 
       snackbar: false,
       snackbarMessage: null,
@@ -226,7 +235,8 @@
         }
       },
       exportSQL() {
-        // TODO: Show dialog
+        this.exportString = this.entityManager.exportToSQL();
+        this.exportDialog = true;
       },
       onResze() {
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
