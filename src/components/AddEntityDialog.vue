@@ -3,6 +3,15 @@
     v-model="isOpened"
     max-width="560"
   >
+    <v-snackbar
+      v-model="snackbar"
+      top
+      right
+      color="error"
+      :timeout="4000"
+    >
+      <span class="subtitle-1">{{ snackbarMessage }}</span>
+    </v-snackbar>
     <v-card>
       <v-card-title class="headline">
         Add entity
@@ -47,6 +56,9 @@
     },
     data: () => ({
       name: null,
+
+      snackbar: false,
+      snackbarMessage: null,
     }),
     computed: {
       isOpened: {
@@ -62,7 +74,11 @@
     },
     methods: {
       save() {
-        // TODO: checks
+        if (!this.name || /\s+/.test(this.name)) {
+          this.snackbar = true;
+          this.snackbarMessage = 'Incorrect name';
+          return;
+        }
         this.$emit('save', this.name);
       }
     },

@@ -2,10 +2,12 @@ export const MySQLTypes = {
   'CHAR': {
     type: 'string',
     maxLength: 255,
+    allowDefault: true,
   },
   'VARCHAR': {
     type: 'string',
     maxLength: 255,
+    allowDefault: true,
   },
   'TINYTEXT': {
     type: 'string',
@@ -38,23 +40,28 @@ export const MySQLTypes = {
   'TINYINT': {
     type: 'number',
     maxLength: 127,
+    allowDefault: true,
   },
   'SMALLINT': {
     type: 'number',
     maxLength: 32767,
+    allowDefault: true,
   },
   'MEDIUMINT': {
     type: 'number',
     maxLength: 8388607,
+    allowDefault: true,
   },
   'INT': {
     type: 'number',
     maxLength: 2147483647,
+    allowDefault: true,
   },
   'BIGINT': {
     type: 'number',
     // eslint-disable-next-line no-undef
     maxLength: BigInt('9223372036854775807'),
+    allowDefault: true,
   },
   'FLOAT': {
     type: 'number',
@@ -84,6 +91,7 @@ export const MySQLTypes = {
     type: 'number',
     maxLength: 1,
     dennyUnsigned: true,
-    is: 'TINYINT(1)',
+    is: 'TINYINT(1) UNSIGNED',
+    allowDefault: true,
   },
 };

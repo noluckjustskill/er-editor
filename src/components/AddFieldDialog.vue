@@ -57,6 +57,7 @@
             />
             <v-text-field
               v-model="defaultValue"
+              :disabled="!alowDefaultValue"
               :label="defaultValueLabel"
               :type="defaultValueType"
             />
@@ -140,7 +141,10 @@
       },
       allowUnsigned() {
         return MySQLTypes[this.type].type === 'number' && !MySQLTypes[this.type].dennyUnsigned;
-      }
+      },
+      alowDefaultValue() {
+        return Boolean(MySQLTypes[this.type].allowDefault);
+      },
     },
     methods: {
       swichType() {

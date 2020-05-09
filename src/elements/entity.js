@@ -1,6 +1,6 @@
 import { v4 as guid } from 'uuid';
 import * as PIXI from 'pixi.js-legacy';
-import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY } from '../constants/events.constants';
+import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, ERROR } from '../constants/events.constants';
 
 export const WIDTH = 300;
 export const FIELD_HEIGHT = 30;
@@ -143,8 +143,8 @@ export class Entity {
       iconPrimaryKey
         .on('click', () => {
           if (!this.primaryKey) {
-            this.primaryKey = name;
-            iconPrimaryKey.alpha = 1;
+            const done = this.setPrimaryKey(name);
+            if (done) iconPrimaryKey.alpha = 1;
           } else if (this.primaryKey === name) {
             this.primaryKey = null;
             iconPrimaryKey.alpha = 0.6;
@@ -249,22 +249,31 @@ export class Entity {
     this.moveAddIcon();
   }
 
+  setPrimaryKey(name) {
+    if (this.primaryKey) {
+      return;
+    }
+    try {
+      if (!this.fields[name]) {
+        throw new Error('Field not found');
+      }
+      if (this.fields[name].nullable) {
+        throw new Error('Primary key must be not null');
+      }
+
+      this.primaryKey = name;
+      return true;
+    } catch(e) {
+      this.emit(ERROR, e.message);
+      return false;
+    }
+  }
+
   get width() {
     return WIDTH;
   }
 
   get height() {
     return (Object.keys(this.fields).length + 1) * FIELD_HEIGHT;
-  }
-
-  set primaryKey(name) {
-    if (this.primaryKey) {
-      return;
-    }
-    if (!this.fields[name]) {
-      throw new Error('Field not found');
-    }
-
-    this.primaryKey = name;
   }
 }

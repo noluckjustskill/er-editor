@@ -2,7 +2,8 @@ import { v4 as guid } from 'uuid';
 import * as PIXI from 'pixi.js-legacy';
 import isEqual from 'lodash.isequal';
 import { Entity, FIELD_HEIGHT } from "../elements/entity";
-import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, EDIT_RELATION } from "../constants/events.constants";
+import { MySQLTypes } from "../constants/mysql-types.constants";
+import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, EDIT_RELATION, ERROR } from "../constants/events.constants";
 import { RELATIONS_TYPES } from '../constants/relations.constants';
 
 const ICON_SIZE = 20;
@@ -134,6 +135,9 @@ export class EntityManager {
       case REMOVE_FIELD:
         this.removeRelation(null, args[0], args[1]);
         break;
+      case ERROR: 
+        this.emit(ERROR, args[0]);
+        break;
       default:
         break;
     }
@@ -209,5 +213,66 @@ export class EntityManager {
 
       this.view.addChild(editButton);
     });
+  }
+
+  exportToSQL() {
+    let exportString = '';
+
+    const convertDefaultValue = (val) => {
+      const num = Number(val);
+      return isNaN(num) ? `'${val}'` : num;
+    };
+
+    Object.keys(this.entities).forEach(id => {
+      exportString += `CREATE TABLE IF NOT EXISTS \`${this.entities[id].name}\` (\n`;
+
+      const fields = this.entities[id].fields;
+      Object.keys(fields).forEach((fieldName, i, arr) => {
+        const field = fields[fieldName];
+        // Field name
+        exportString += `\t\`${fieldName}\``;
+
+        // Field type
+        if (MySQLTypes[field.type].is) {
+          exportString += ` ${MySQLTypes[field.type].is}`;
+        } else {
+          exportString += ` ${field.type + (field.length ? `(${field.length})` : '')} ${field.unsigned ? 'UNSIGNED' : ''}`.trimRight();
+        }
+
+        // Nullable
+        exportString += ` ${!field.nullable ? 'NOT' : ''} NULL`;
+
+        // Default value
+        exportString += ` ${field.defaultValue ? `DEFAULT ${convertDefaultValue(field.defaultValue)}` : ''}`.trimRight();
+
+        if (i < arr.length - 1 || this.entities[id].primaryKey) {
+          exportString += `,`;
+        } 
+        exportString += `\n`;
+      });
+
+      if (this.entities[id].primaryKey) {
+        exportString += `\tPRIMARY KEY (\`${this.entities[id].primaryKey}\`)\n`;
+      }
+
+      exportString += `);\n\n`;
+    });
+
+    Object.values(this.relations).forEach(({ from, to }) => {
+      const fromName = this.entities[from.entity].name;
+      const toName = this.entities[to.entity].name;
+
+      exportString += `ALTER TABLE \`${fromName}\` ADD FOREIGN KEY (\`${from.field}\`) REFERENCES \`${toName}\`(\`${to.field}\`);\n`;
+      exportString += `ALTER TABLE \`${toName}\` ADD FOREIGN KEY (\`${to.field}\`) REFERENCES \`${fromName}\`(\`${from.field}\`);\n`;
+
+      if (from.type !== RELATIONS_TYPES[1]) {
+        exportString += `ALTER IGNORE TABLE \`${fromName}\` ADD UNIQUE INDEX(\`${from.field}\`);\n`;
+      }
+      if (to.type !== RELATIONS_TYPES[1]) {
+        exportString += `ALTER IGNORE TABLE \`${toName}\` ADD UNIQUE INDEX(\`${to.field}\`);\n`;
+      }
+    });
+
+    return exportString;
   }
 }

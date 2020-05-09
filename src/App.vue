@@ -19,7 +19,26 @@
             color="primary"
             @click="addEntityDialog = true"
           >
+            <v-icon
+              small
+              class="mr-1"
+            >
+              mdi-plus
+            </v-icon>
             Add
+          </v-btn>
+          <v-btn
+            color="secondary"
+            class="ml-2"
+            @click="exportSQL"
+          >
+            <v-icon
+              small
+              class="mr-1"
+            >
+              mdi-export
+            </v-icon>
+            Export
           </v-btn>
         </div>
       </v-container>
@@ -46,7 +65,7 @@
 <script>
   import * as PIXI from 'pixi.js-legacy';
   import { EntityManager } from './managers/entity.manager';
-  import { ADD_FIELD, EDIT_RELATION } from './constants/events.constants';
+  import { ADD_FIELD, EDIT_RELATION, ERROR } from './constants/events.constants';
 
   import AddFieldDialog from './components/AddFieldDialog';
   import AddEntityDialog from './components/AddEntityDialog';
@@ -108,7 +127,7 @@
         this.addEntityDialog = false;
       },
       move (e) {
-        if (e.buttons) {
+        if (e.buttons && e.srcElement.isEqualNode(this.app.view)) {
           const entityId = this.entityForMove || this.entityManager.findEntity(e.clientX, e.clientY);
 
           // Move entity
@@ -198,9 +217,16 @@
             this.selectedRelation = args[0];
             this.editRelationDialog = true;
             break;
+          case ERROR: 
+            this.snackbar = true;
+            this.snackbarMessage = args[0];
+            break;
           default:
             break;
         }
+      },
+      exportSQL() {
+        // TODO: Show dialog
       },
       onResze() {
         this.app.renderer.resize(window.innerWidth, window.innerHeight);
