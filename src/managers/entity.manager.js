@@ -295,10 +295,10 @@ export class EntityManager {
       exportString += `ALTER TABLE \`${toName}\` ADD FOREIGN KEY (\`${to.field}\`) REFERENCES \`${fromName}\`(\`${from.field}\`);\n`;
 
       if (from.type !== RELATIONS_TYPES[1]) {
-        exportString += `ALTER IGNORE TABLE \`${fromName}\` ADD UNIQUE INDEX(\`${from.field}\`);\n`;
+        exportString += `ALTER TABLE \`${fromName}\` ADD UNIQUE INDEX(\`${from.field}\`);\n`;
       }
       if (to.type !== RELATIONS_TYPES[1]) {
-        exportString += `ALTER IGNORE TABLE \`${toName}\` ADD UNIQUE INDEX(\`${to.field}\`);\n`;
+        exportString += `ALTER TABLE \`${toName}\` ADD UNIQUE INDEX(\`${to.field}\`);\n`;
       }
     });
 
