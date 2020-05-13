@@ -1,7 +1,7 @@
 <template>
   <v-dialog
     v-model="isOpened"
-    max-width="560"
+    max-width="700"
   > 
     <v-snackbar
       v-model="snackbar"
@@ -17,6 +17,7 @@
         Export
       </v-card-title>
       <v-card-text>
+        <!-- eslint-disable vue/no-v-html -->
         <div
           class="code mb-4 pa-2"
           v-html="highlightSQL"
@@ -78,7 +79,7 @@
         }
       },
       highlightSQL() {
-        return hljs.highlight('sql', this.sql).value;
+        return this.sql ? hljs.highlight('sql', this.sql).value : null;
       },
     },
     methods: {
@@ -92,6 +93,9 @@
 
 <style scoped>
   .code {
+    max-width: 100%;
+    max-height: 600px;
+    overflow: scroll;
     background-color: #f6f8fa;
     white-space: pre;
     line-height: 1rem;

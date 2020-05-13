@@ -1,6 +1,6 @@
 import { v4 as guid } from 'uuid';
 import * as PIXI from 'pixi.js-legacy';
-import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, ERROR } from '../constants/events.constants';
+import { ADD_FIELD, ADD_PRIMARY_KEY, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, ERROR } from '../constants/events.constants';
 
 export const WIDTH = 300;
 export const FIELD_HEIGHT = 30;
@@ -26,11 +26,12 @@ export class Entity {
   fields = {};
   primaryKey = null;
 
-  constructor(name, x, y, emit) {
+  constructor({ id = guid(), name, x, y, primaryKey, emit }) {
+    this.id = id;
     this.name = name;
     this.x = x;
     this.y = y;
-    this.id = guid();
+    this.primaryKey = primaryKey;
     this.emit = emit;
 
     this.header.interactive = true;
@@ -73,6 +74,14 @@ export class Entity {
 
     this.render();
     this.emit(MOVE_ENTITY);
+  }
+
+  moveAddIcon() {
+    const offset = Object.keys(this.fields).length + 1;
+    this.iconAdd.position.set(
+      this.x + WIDTH / 2,
+      this.y + (FIELD_HEIGHT * offset) + this.iconAdd.height / 3,
+    );
   }
 
   render() {    
@@ -178,14 +187,6 @@ export class Entity {
     this.moveAddIcon();
   }
 
-  moveAddIcon() {
-    const offset = Object.keys(this.fields).length + 1;
-    this.iconAdd.position.set(
-      this.x + WIDTH / 2,
-      this.y + (FIELD_HEIGHT * offset) + this.iconAdd.height / 3,
-    );
-  }
-
   createConnectors(name, row) {
     const firstConnector = new PIXI.Sprite(PIXI.Texture.from(require('../assets/connect.png')));
     firstConnector.forRow = name;
@@ -246,6 +247,7 @@ export class Entity {
       this.primaryKey = null;
     }
 
+    this.renderFields();
     this.moveAddIcon();
   }
 
@@ -262,6 +264,7 @@ export class Entity {
       }
 
       this.primaryKey = name;
+      this.emit(ADD_PRIMARY_KEY);
       return true;
     } catch(e) {
       this.emit(ERROR, e.message);

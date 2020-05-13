@@ -3,8 +3,9 @@ import * as PIXI from 'pixi.js-legacy';
 import isEqual from 'lodash.isequal';
 import { Entity, FIELD_HEIGHT } from "../elements/entity";
 import { MySQLTypes } from "../constants/mysql-types.constants";
-import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, EDIT_RELATION, ERROR } from "../constants/events.constants";
+import { ADD_FIELD, REMOVE_FIELD, REMOVE_ENTITY, MOVE_ENTITY, EDIT_RELATION, ERROR, ADD_PRIMARY_KEY } from "../constants/events.constants";
 import { RELATIONS_TYPES } from '../constants/relations.constants';
+import { saveEntities, saveRelations, getEntities, getRelations } from '../utils/storage.util';
 
 const ICON_SIZE = 20;
 const TEXT_STYLE =  {
@@ -22,6 +23,9 @@ export class EntityManager {
     container.addChild(this.view);
     this.container = container;
     this.emit = emit;
+
+    this.addEntities(getEntities());
+    this.addRelations(getRelations());
   }
 
   addEntity(name, x, y) {
@@ -29,13 +33,27 @@ export class EntityManager {
       throw new Error('Entity already exists');
     }
 
-    const entity = new Entity(name, x, y, this.eventHandler.bind(this));
+    const entity = new Entity({ name, x, y, emit: this.eventHandler.bind(this) });
     this.entities[entity.id] = entity;
     this.container.addChild(entity.view);
 
     entity.render();
     
     return entity.id;
+  }
+
+  addEntities(entities) {
+    entities.forEach(({ fields, ...entityData }) => {
+      const entity = new Entity({ ...entityData, emit: this.eventHandler.bind(this) });
+      this.entities[entity.id] = entity;
+      this.container.addChild(entity.view);
+
+      Object.keys(fields).forEach(name => {
+        entity.addField({ name, ...fields[name] });
+      });
+    
+      entity.render();
+    });
   }
 
   findEntity(x, y) {
@@ -60,6 +78,8 @@ export class EntityManager {
     this.removeRelation(null, id);
     this.entities[id].view.destroy();
     delete this.entities[id];
+
+    this.saveToStorage();
   }
 
   addRelation(from, to) {
@@ -94,6 +114,11 @@ export class EntityManager {
     return id;
   }
 
+  addRelations(relations) {
+    this.relations = relations;
+    this.renderRelations();
+  }
+
   updateRelation(relationId, typeFrom, typeTo) {
     if (!this.relations[relationId]) {
       throw new Error('Relation not found');
@@ -119,28 +144,7 @@ export class EntityManager {
     }
 
     this.renderRelations();
-  }
-
-  eventHandler(event, ...args) {
-    switch (event) {
-      case MOVE_ENTITY:
-        this.renderRelations();
-        break;
-      case REMOVE_ENTITY:
-        this.removeEntity(args[0]);
-        break;
-      case ADD_FIELD:
-        this.emit(ADD_FIELD, args[0]);
-        break;
-      case REMOVE_FIELD:
-        this.removeRelation(null, args[0], args[1]);
-        break;
-      case ERROR: 
-        this.emit(ERROR, args[0]);
-        break;
-      default:
-        break;
-    }
+    this.saveToStorage();
   }
 
   renderRelations() {
@@ -215,6 +219,31 @@ export class EntityManager {
     });
   }
 
+  eventHandler(event, ...args) {
+    switch (event) {
+      case MOVE_ENTITY:
+        this.renderRelations();
+        break;
+      case REMOVE_ENTITY:
+        this.removeEntity(args[0]);
+        break;
+      case ADD_FIELD:
+        this.emit(ADD_FIELD, args[0]);
+        break;
+      case ADD_PRIMARY_KEY:
+        this.saveToStorage();
+        break;
+      case REMOVE_FIELD:
+        this.removeRelation(null, args[0], args[1]);
+        break;
+      case ERROR: 
+        this.emit(ERROR, args[0]);
+        break;
+      default:
+        break;
+    }
+  }
+
   exportToSQL() {
     let exportString = '';
 
@@ -274,5 +303,10 @@ export class EntityManager {
     });
 
     return exportString;
+  }
+
+  saveToStorage() {
+    saveEntities(this.entities);
+    saveRelations(this.relations);
   }
 }

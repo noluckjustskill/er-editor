@@ -86,7 +86,6 @@
     },
     data: () => ({
       app: null,
-      relationsManager: null,
       entityManager: null,
       selectedEntity: null,
       selectedRelation: null,
@@ -134,6 +133,7 @@
           return;
         }
         this.addEntityDialog = false;
+        this.entityManager.saveToStorage();
       },
       move (e) {
         if (e.buttons && e.srcElement.isEqualNode(this.app.view)) {
@@ -183,6 +183,8 @@
             } catch (e) {
               this.snackbar = true;
               this.snackbarMessage = e.message;
+            } finally {
+              this.entityManager.saveToStorage();
             }
           }
 
@@ -190,9 +192,10 @@
           this.selectedConnector = null;
           this.app.stage.removeChild(this.connectingLine);
           this.connectingLine = null;
+        } else if (this.entityForMove) {
+          this.entityForMove = null;
+          this.entityManager.saveToStorage();
         }
-        
-        this.entityForMove = null;
       },
       addField (options) {
         const entity = this.entityManager.entities[this.selectedEntity];
@@ -210,11 +213,15 @@
 
         this.selectedEntity = null;
         this.addFieldDialog = false;
+
+        this.entityManager.saveToStorage();
       },
       editRelation(fromType, toType) {
         this.entityManager.updateRelation(this.selectedRelation, fromType, toType);
         this.selectedRelation = null;
         this.editRelationDialog = false;
+
+        this.entityManager.saveToStorage();
       },
       eventHandler(event, ...args) {
         switch (event) {
