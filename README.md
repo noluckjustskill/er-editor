@@ -1,5 +1,8 @@
 # ER models editor
 
+## Try 🤯
+[noluckjustskill.github.io/er-editor](https://noluckjustskill.github.io/er-editor/)
+
 ## Project setup
 ```
 npm install
